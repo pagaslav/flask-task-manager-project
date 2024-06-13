@@ -38,7 +38,7 @@ def check_db_connection():
         return "MongoDB connection successful!"
     except Exception as e:
         return str(e)
-    
+
 @app.route("/manual_check_db_connection")
 def manual_check_db_connection():
     try:
@@ -61,12 +61,34 @@ def get_tasks():
         return render_template("tasks.html", tasks=tasks)
     except Exception as e:
         return str(e)
-    
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    return render_template("register.html")
+    existing_user = None
+    if request.method == "POST":
+        username = request.form.get("username")
+        if username:
+            existing_user = mongo.db.users.find_one({"username": username.lower()})
+        else:
+            flash("Please enter a username")
+            return redirect(url_for("register"))
 
+        if existing_user:
+            flash("Username already exists")
+            return redirect(url_for("register"))
+
+        register = {
+            "username": username.lower(),
+            "password": generate_password_hash(request.form.get("password"))
+        }
+        mongo.db.users.insert_one(register)
+
+        # put the new user into 'session' cookie
+        session["user"] = username.lower()
+        flash("Registration Successful!")
+        return render_template("register.html")
+
+    return render_template("register.html")
 
 if __name__ == "__main__":
     app.run(host=os.environ.get("IP"), port=int(os.environ.get("PORT")), debug=True)
