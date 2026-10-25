@@ -21,7 +21,8 @@ app.secret_key = os.environ.get("SECRET_KEY")
 
 # Обновленный PyMongo с использованием certifi
 mongo = PyMongo(app, tlsCAFile=certifi.where())
-app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax",
+                  SESSION_COOKIE_SECURE=os.environ.get("TASK_ALLOW_INSECURE_HTTP") != "1")
 
 def csrf_token():
     token = session.get("_csrf_token")
