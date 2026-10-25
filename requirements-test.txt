@@ -1,0 +1,6 @@
+Flask==3.0.3
+Flask-PyMongo==2.3.0
+pymongo==4.7.2
+Werkzeug==3.0.3
+certifi==2026.10.23
+mongomock==4.3.0

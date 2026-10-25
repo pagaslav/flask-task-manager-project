@@ -92,20 +92,20 @@ def register():
         if not requested_username or (reserved_admin and requested_username == reserved_admin):
             abort(403)
         existing_user = mongo.db.users.find_one(
-            {"username": request.form.get("username").lower()})
+            {"username": requested_username})
 
         if existing_user:
             flash("Username already exists")
             return redirect(url_for("register"))
 
         register = {
-            "username": request.form.get("username").lower(),
+            "username": requested_username,
             "password": generate_password_hash(request.form.get("password"))
         }
         mongo.db.users.insert_one(register)
 
         session.clear()
-        session["user"] = (request.form.get("username") or "").strip().lower()
+        session["user"] = register["username"]
         flash("Registration Successful!")
         return redirect(url_for("profile", username=session["user"]))
 
@@ -121,7 +121,7 @@ def login():
             if check_password_hash(
                     existing_user["password"], request.form.get("password")):
                 session.clear()
-                session["user"] = (request.form.get("username") or "").strip().lower()
+                session["user"] = existing_user["username"]
                 flash("Welcome, {}".format(
                     request.form.get("username")))
                 return redirect(url_for(
