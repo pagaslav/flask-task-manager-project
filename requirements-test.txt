@@ -1,6 +1,6 @@
-Flask==3.0.3
+Flask==3.1.3
 Flask-PyMongo==2.3.0
-pymongo==4.7.2
-Werkzeug==3.0.3
+pymongo==4.18.2
+Werkzeug==3.1.9
 certifi==2026.10.23
 mongomock==4.3.0
