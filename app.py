@@ -120,7 +120,7 @@ def login():
             if check_password_hash(
                     existing_user["password"], request.form.get("password")):
                 session.clear()
-        session["user"] = (request.form.get("username") or "").strip().lower()
+                session["user"] = (request.form.get("username") or "").strip().lower()
                 flash("Welcome, {}".format(
                     request.form.get("username")))
                 return redirect(url_for(
