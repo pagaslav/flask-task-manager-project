@@ -42,8 +42,8 @@ class SecurityContracts(unittest.TestCase):
         self.assertIn("compare_digest", ast.get_source_segment(SOURCE, method("require_csrf_on_mutations")))
         for path in (ROOT / "templates").glob("*.html"):
             html = path.read_text(encoding="utf-8")
-            for match in re.finditer(r"<form\\b[^>]*>", html, re.I | re.S):
-                if not re.search(r"method=[\\\"']post[\\\"']", match.group(0), re.I):
+            for match in re.finditer("<form[^>]*>", html, re.I | re.S):
+                if "method=\"post\"" not in match.group(0).lower() and "method=\u0027post\u0027" not in match.group(0).lower():
                     continue
                 end = html.find("</form>", match.end())
                 self.assertNotEqual(end, -1, str(path))
