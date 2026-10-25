@@ -86,6 +86,10 @@ def search():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        requested_username = (request.form.get("username") or "").strip().lower()
+        reserved_admin = (os.environ.get("TASK_ADMIN_USERNAME") or "").strip().lower()
+        if not requested_username or (reserved_admin and requested_username == reserved_admin):
+            abort(403)
         existing_user = mongo.db.users.find_one(
             {"username": request.form.get("username").lower()})
 
@@ -99,7 +103,8 @@ def register():
         }
         mongo.db.users.insert_one(register)
 
-        session["user"] = request.form.get("username").lower()
+        session.clear()
+        session["user"] = (request.form.get("username") or "").strip().lower()
         flash("Registration Successful!")
         return redirect(url_for("profile", username=session["user"]))
 
@@ -114,7 +119,8 @@ def login():
         if existing_user:
             if check_password_hash(
                     existing_user["password"], request.form.get("password")):
-                session["user"] = request.form.get("username").lower()
+                session.clear()
+        session["user"] = (request.form.get("username") or "").strip().lower()
                 flash("Welcome, {}".format(
                     request.form.get("username")))
                 return redirect(url_for(
