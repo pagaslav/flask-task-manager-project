@@ -5,6 +5,7 @@
 
     <div class="row">
         <form class="col s12 m8 offset-m2" method="POST" action="{{ url_for('register') }}">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <div class="card-panel">
                 <!-- username -->
                 <div class="row">
