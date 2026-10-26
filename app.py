@@ -1,3 +1,5 @@
+from security_login import enforce_login_limits
+from pymongo.errors import DuplicateKeyError
 import os
 import secrets
 from functools import wraps
@@ -99,10 +101,15 @@ def register():
             return redirect(url_for("register"))
 
         register = {
+            "_id": "username:" + requested_username,
             "username": requested_username,
             "password": generate_password_hash(request.form.get("password"))
         }
-        mongo.db.users.insert_one(register)
+        try:
+            # The built-in unique _id index closes concurrent signup races.
+            mongo.db.users.insert_one(register)
+        except DuplicateKeyError:
+            abort(409)
 
         session.clear()
         session["user"] = register["username"]
@@ -114,8 +121,12 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        existing_user = mongo.db.users.find_one(
-            {"username": request.form.get("username").lower()})
+        username = (request.form.get("username") or "").lower()
+        password = request.form.get("password") or ""
+        enforce_login_limits(app, mongo, username)
+        if not username or len(username) > 254 or not password or len(password) > 1024:
+            abort(400)
+        existing_user = mongo.db.users.find_one({"username": username})
 
         if existing_user:
             if check_password_hash(
