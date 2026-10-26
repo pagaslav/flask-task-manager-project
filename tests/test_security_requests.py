@@ -100,6 +100,30 @@ class TaskAccessTests(unittest.TestCase):
         self.login_as('alice')
         self.assertEqual(self.post('/delete_task/invalid').status_code, 404)
 
+    def test_real_login_route_enforces_shared_budget_before_password_check(self):
+        self.db.users.insert_one({'username':'alice','password':'synthetic hash'})
+        self.login_as(None)
+        with patch.object(self.module, 'check_password_hash', return_value=False) as verify:
+            for _ in range(10):
+                self.assertEqual(self.post('/login', {'username':'alice','password':'wrong'}).status_code, 302)
+            self.assertEqual(self.post('/login', {'username':'alice','password':'wrong'}).status_code, 429)
+            self.assertEqual(verify.call_count, 10)
+
+    def test_concurrent_registration_cannot_claim_existing_task_identity(self):
+        self.login_as(None)
+        original = self.db.users.insert_one
+        def concurrent_signup(document):
+            victim = dict(document, password=generate_password_hash('VictimPassword1'))
+            original(victim)
+            return original(document)
+        with patch.object(self.db.users, 'insert_one', side_effect=concurrent_signup):
+            response = self.post('/register', {'username':' Alice ', 'password':'AttackerPassword1'})
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.db.users.count_documents({'username':'alice'}), 1)
+        with self.client.session_transaction() as session:
+            self.assertNotIn('user', session)
+        self.assertEqual(self.db.tasks.find_one({'_id':self.task_id})['created_by'], 'alice')
+
 
 if __name__ == '__main__':
     unittest.main()

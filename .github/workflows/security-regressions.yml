@@ -7,6 +7,18 @@ jobs:
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    services:
+      mongo:
+        image: mongo:8.0@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping:1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SECURITY_TEST_MONGO_URI: mongodb://127.0.0.1:27017
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
